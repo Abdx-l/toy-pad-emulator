@@ -9,7 +9,7 @@ export class Pad extends EventEmitter {
     if (fs.existsSync(path)) {
       const saved = JSON.parse(fs.readFileSync(path, 'utf8'));
       if (Array.isArray(saved.slots) && saved.slots.length === 3 && saved.led) this.state = saved;
-    }
+    } else fs.writeFileSync(path, JSON.stringify(this.state, null, 2));
   }
   update(fn) {
     fn(this.state);
