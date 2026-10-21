@@ -1,0 +1,20 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Toy Pad Emulator</title><style>
+body{font:16px system-ui;background:#101725;color:#eef4ff;max-width:750px;margin:3rem auto;padding:1rem}
+h1{font-size:2rem} section{background:#202b40;padding:1.3rem;border-radius:1rem;margin:1rem 0}
+.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem}input,select,button{font:inherit;padding:.55rem;border-radius:.45rem}
+button{background:#8cc9ff;border:0;cursor:pointer}input{max-width:100%}.status{color:#aaddad}
+@media(max-width:600px){.slots{grid-template-columns:1fr}}
+</style><main><h1>Toy Pad Emulator</h1><p>Local virtual pad controls. Revision <strong id="revision">0</strong></p>
+<section><h2>Tag slots</h2><div class="slots" id="slots"></div></section>
+<section><h2>LED</h2><label>Colour <input id="color" type="color" value="#ffffff"></label>
+<label>Effect <select id="effect"><option>solid</option><option>pulse</option><option>off</option></select></label>
+<button id="apply">Apply LED</button></section><p class="status" id="status" role="status"></p></main>
+<script>
+const slots=document.querySelector('#slots');
+for(let i=0;i<3;i++){const panel=document.createElement('div');panel.innerHTML='<label>Slot '+(i+1)+' <input maxlength="32" aria-label="Tag slot '+(i+1)+'"></label><button>Set</button><button>Clear</button>';const input=panel.querySelector('input');panel.querySelectorAll('button')[0].onclick=()=>send('/api/slots/'+i,'POST',{tag:input.value});panel.querySelectorAll('button')[1].onclick=()=>send('/api/slots/'+i,'POST',{tag:null});slots.append(panel)}
+async function send(url,method,data){try{const r=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const result=await r.json();document.querySelector('#status').textContent=r.ok?'Updated':'Error: '+result.error}catch(e){document.querySelector('#status').textContent=e.message}}
+document.querySelector('#apply').onclick=()=>send('/api/led','PUT',{color:document.querySelector('#color').value,effect:document.querySelector('#effect').value});
+new EventSource('/api/events').onmessage=e=>{const state=JSON.parse(e.data);document.querySelector('#revision').textContent=state.revision;state.slots.forEach((tag,i)=>slots.children[i].querySelector('input').value=tag||'');document.querySelector('#color').value=state.led.color;document.querySelector('#effect').value=state.led.effect}
+</script></html>
+
